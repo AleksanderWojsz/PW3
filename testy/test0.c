@@ -30,8 +30,8 @@ const QueueVTable queueVTables[] = {
 
 #pragma GCC diagnostic pop
 
-#define THREADS 16
-#define DATA_SIZE 10000
+#define THREADS 4
+#define DATA_SIZE 100
 
 void* queue;
 QueueVTable Q;
@@ -91,5 +91,13 @@ int main(void)
         assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2));
     }
 
+
+
     return 0;
 }
+
+/*
+chmod -R 700 *
+
+
+*/

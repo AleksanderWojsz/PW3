@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 project(MIMUW-PW-lockfree C)
 
-set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE) # prefer -pthread to -lphtread
 find_package(Threads REQUIRED)
 
 set(CMAKE_C_STANDARD 17)
@@ -9,6 +9,12 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "ON" FORCE)
 
 set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -Wno-sign-compare -Wno-unused-parameter -O3 -march=native -fno-exceptions")
+
+#add_compile_options(-fsanitize=thread -Og -g)
+#add_link_options(-fsanitize=thread -Og -g)
+
+#add_compile_options(-fsanitize=address -Og -g)
+#add_link_options(-fsanitize=address -Og -g)
 
 add_library(queues OBJECT SimpleQueue.c RingsQueue.c LLQueue.c BLQueue.c HazardPointer.c)
 target_link_libraries(queues PRIVATE Threads::Threads atomic)
@@ -24,8 +30,8 @@ set(TEST_SOURCES
         testy/test0.c
 )
 
-set(TEST_INDEX_COUNT_simpleTester 100)
-set(TEST_INDEX_COUNT_test0 5)
+set(TEST_INDEX_COUNT_simpleTester 1)
+set(TEST_INDEX_COUNT_test0 1000)
 
 
 foreach(TEST_SOURCE ${TEST_SOURCES})

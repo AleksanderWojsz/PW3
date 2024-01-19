@@ -95,9 +95,3 @@ int main(void)
 }
 
 
-/*
-chmod -R 700 *
-
-
-
-*/
