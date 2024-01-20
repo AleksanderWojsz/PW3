@@ -33,7 +33,7 @@ set(TEST_SOURCES
 
 set(TEST_INDEX_COUNT_simpleTester 1)
 set(TEST_INDEX_COUNT_test0 1)
-set(TEST_INDEX_COUNT_test1 100)
+set(TEST_INDEX_COUNT_test1 10000)
 
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
