@@ -91,13 +91,5 @@ int main(void)
         assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2));
     }
 
-
-
     return 0;
 }
-
-/*
-chmod -R 700 *
-
-
-*/

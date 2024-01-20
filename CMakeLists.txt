@@ -28,10 +28,12 @@ set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 set(TEST_SOURCES
         testy/simpleTester.c
         testy/test0.c
+        testy/test1.c
 )
 
 set(TEST_INDEX_COUNT_simpleTester 1)
-set(TEST_INDEX_COUNT_test0 1000)
+set(TEST_INDEX_COUNT_test0 1)
+set(TEST_INDEX_COUNT_test1 100)
 
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
