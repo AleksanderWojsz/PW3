@@ -30,7 +30,7 @@ const QueueVTable queueVTables[] = {
 
 #pragma GCC diagnostic pop
 
-#define THREADS 4
+#define THREADS 200
 #define DATA_SIZE 100
 
 void* queue;

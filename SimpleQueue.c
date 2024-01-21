@@ -89,6 +89,7 @@ Value SimpleQueue_pop(SimpleQueue* queue)
 bool SimpleQueue_is_empty(SimpleQueue* queue)
 {
     pthread_mutex_lock(&queue->head_mtx);
+    // Jeśli w kolejce jest tylko strażnik, to jest pusta
     bool result = (atomic_load(&atomic_load(&queue->head)->next) == NULL ? true : false);
     pthread_mutex_unlock(&queue->head_mtx);
 

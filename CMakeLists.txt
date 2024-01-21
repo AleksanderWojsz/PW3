@@ -27,13 +27,19 @@ set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 
 set(TEST_SOURCES
         testy/simpleTester.c
-        testy/test0.c
-        testy/test1.c
+        testy/many_threads.c
+        testy/big_data.c
+        testy/is_empty.c
+        testy/should_be_empty.c
+        testy/pop_on_empty.c
 )
 
-set(TEST_INDEX_COUNT_simpleTester 1)
-set(TEST_INDEX_COUNT_test0 1)
-set(TEST_INDEX_COUNT_test1 10000)
+set(TEST_INDEX_COUNT_simpleTester 100)
+set(TEST_INDEX_COUNT_many_threads 100)
+set(TEST_INDEX_COUNT_big_data 100)
+set(TEST_INDEX_COUNT_is_empty 100)
+set(TEST_INDEX_COUNT_should_be_empty 100)
+set(TEST_INDEX_COUNT_pop_on_empty 100)
 
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
