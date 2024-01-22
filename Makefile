@@ -17,7 +17,7 @@ build: $(OBJ) $(EXE)
 test: build
 	@for test in $(EXE); do \
 		echo Running $$test with Valgrind; \
-		valgrind --leak-check=yes --show-leak-kinds=all --quiet --error-exitcode=1 $$test > /dev/null; \
+		valgrind --track-origins=yes --leak-check=yes  --show-leak-kinds=all --quiet --error-exitcode=1 $$test > /dev/null; \
 		RESULT=$$?; \
 		if [ $$RESULT -eq 0 ]; then \
 			echo "OK"; \
