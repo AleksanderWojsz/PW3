@@ -78,14 +78,14 @@ void RingsQueue_push(RingsQueue* queue, Value item)
     pthread_mutex_lock(&queue->push_mtx);
 
     // Jeśli nie ma miejsca, to tworzymy nowy węzeł i aktualizujemy wskaźniki
-    assert(queue->tail->push_idx - queue->tail->pop_idx <= RING_SIZE);
-    if (queue->tail->push_idx - queue->tail->pop_idx == RING_SIZE) {
+    assert(atomic_load(&queue->tail->push_idx) - atomic_load(&queue->tail->pop_idx) <= RING_SIZE);
+    if (atomic_load(&queue->tail->push_idx) - atomic_load(&queue->tail->pop_idx) == RING_SIZE) {
         RingsQueueNode* new_node = RingsQueueNode_new();
         atomic_store(&queue->tail->next, new_node);
         queue->tail = new_node;
     }
 
-    queue->tail->buffer[(queue->tail->push_idx) % RING_SIZE] = item;
+    queue->tail->buffer[atomic_load(&queue->tail->push_idx) % RING_SIZE] = item;
     atomic_fetch_add(&queue->tail->push_idx, 1);
 
     pthread_mutex_unlock(&queue->push_mtx);
@@ -102,10 +102,10 @@ Value RingsQueue_pop(RingsQueue* queue)
 {
     pthread_mutex_lock(&queue->pop_mtx);
 
-    assert(queue->head->push_idx - queue->head->pop_idx >= 0);
+    assert(atomic_load(&queue->head->push_idx) - atomic_load(&queue->head->pop_idx) >= 0);
 
     // Jak w head nic nie ma, to przesuwamy się dalej, o ile się da
-    if (queue->head->push_idx - queue->head->pop_idx == 0) {
+    if (atomic_load(&queue->head->push_idx) - atomic_load(&queue->head->pop_idx) == 0) {
         if (atomic_load(&queue->head->next) != NULL) {
             RingsQueueNode *old_head = queue->head;
             queue->head = atomic_load(&queue->head->next);
@@ -117,7 +117,7 @@ Value RingsQueue_pop(RingsQueue* queue)
     }
 
     // W tym miejscu w buforze jest coś do odczytania
-    Value value = queue->head->buffer[(queue->head->pop_idx) % RING_SIZE];
+    Value value = queue->head->buffer[atomic_load(&queue->head->pop_idx) % RING_SIZE];
     atomic_fetch_add(&queue->head->pop_idx, 1);
     pthread_mutex_unlock(&queue->pop_mtx);
     return value;
@@ -129,7 +129,7 @@ bool RingsQueue_is_empty(RingsQueue* queue)
     pthread_mutex_lock(&queue->pop_mtx);
 
     // Head jest pusty i nie ma następnika
-    if (queue->head->push_idx - queue->head->pop_idx == 0 &&
+    if (atomic_load(&queue->head->push_idx) - atomic_load(&queue->head->pop_idx) == 0 &&
             atomic_load(&queue->head->next) == NULL) {
         result = true;
     }
