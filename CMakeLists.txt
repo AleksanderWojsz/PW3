@@ -34,12 +34,12 @@ set(TEST_SOURCES
         testy/pop_on_empty.c
 )
 
-set(TEST_INDEX_COUNT_simpleTester 100)
-set(TEST_INDEX_COUNT_many_threads 100)
-set(TEST_INDEX_COUNT_big_data 100)
-set(TEST_INDEX_COUNT_is_empty 100)
-set(TEST_INDEX_COUNT_should_be_empty 100)
-set(TEST_INDEX_COUNT_pop_on_empty 100)
+set(TEST_INDEX_COUNT_simpleTester 500)
+set(TEST_INDEX_COUNT_many_threads 500)
+set(TEST_INDEX_COUNT_big_data 500)
+set(TEST_INDEX_COUNT_is_empty 500)
+set(TEST_INDEX_COUNT_should_be_empty 500)
+set(TEST_INDEX_COUNT_pop_on_empty 500)
 
 
 foreach(TEST_SOURCE ${TEST_SOURCES})

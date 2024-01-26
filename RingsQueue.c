@@ -15,12 +15,10 @@ typedef struct RingsQueueNode RingsQueueNode;
 struct RingsQueueNode {
     _Atomic(RingsQueueNode*) next;
     Value buffer[RING_SIZE];
-    _Atomic(int) push_idx;
+    _Atomic(int) push_idx; // TODO trzeba korzystac z atomic funkcji
     _Atomic(int) pop_idx;
-    // TODO
 };
 
-// TODO RingsQueueNode_new
 RingsQueueNode* RingsQueueNode_new(void) {
     RingsQueueNode* node = (RingsQueueNode*)malloc(sizeof(RingsQueueNode));
     atomic_init(&node->next, NULL);
@@ -44,7 +42,6 @@ struct RingsQueue {
 RingsQueue* RingsQueue_new(void)
 {
     RingsQueue* queue = (RingsQueue*)malloc(sizeof(RingsQueue));
-    // TODO
     // Nie potrzeba strażnika, bo po prostu będzie pusty bufor
     RingsQueueNode* new_node = RingsQueueNode_new();
     queue->head = new_node;
@@ -66,7 +63,6 @@ void RingsQueue_delete(RingsQueue* queue)
     pthread_mutex_destroy(&queue->pop_mtx);
     pthread_mutex_destroy(&queue->push_mtx);
 
-    // TODO
     free(queue);
 }
 
@@ -93,8 +89,6 @@ void RingsQueue_push(RingsQueue* queue, Value item)
     atomic_fetch_add(&queue->tail->push_idx, 1);
 
     pthread_mutex_unlock(&queue->push_mtx);
-
-    // TODO
 }
 
 /*
@@ -142,5 +136,5 @@ bool RingsQueue_is_empty(RingsQueue* queue)
 
     pthread_mutex_unlock(&queue->pop_mtx);
 
-    return result; // TODO
+    return result;
 }
