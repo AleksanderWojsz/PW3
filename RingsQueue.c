@@ -15,7 +15,7 @@ typedef struct RingsQueueNode RingsQueueNode;
 struct RingsQueueNode {
     _Atomic(RingsQueueNode*) next;
     Value buffer[RING_SIZE];
-    _Atomic(int) push_idx; // TODO trzeba korzystac z atomic funkcji
+    _Atomic(int) push_idx;
     _Atomic(int) pop_idx;
 };
 
