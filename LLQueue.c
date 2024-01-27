@@ -77,9 +77,11 @@ Value LLQueue_pop(LLQueue* queue) {
             return EMPTY_VALUE;
         } else {
             Value value = next->value;
+            LLNode* old_head = head;
+
             // Jak w międzyczasie głowa się zmieniła, to będziemy musieli zacząć ponownie.
             if (atomic_compare_exchange_strong(&queue->head, &head, next)) {
-                HazardPointer_retire(&queue->hp, head);
+                HazardPointer_retire(&queue->hp, old_head);
                 return value;
             }
         }
