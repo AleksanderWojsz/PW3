@@ -6,6 +6,9 @@ TESTS_DIR = testy
 SRC = $(wildcard $(TESTS_DIR)/*.c)
 EXE = $(SRC:.c=)
 
+# testy wykluczone (bez rozszerzeń .c)
+EXCLUDE_TESTS := one_read_one_write
+
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
@@ -16,6 +19,11 @@ build: $(OBJ) $(EXE)
 
 test: build
 	@for test in $(EXE); do \
+		testname=$$(basename $$test); \
+		if echo $(EXCLUDE_TESTS) | grep -wq $$testname; then \
+			echo "Skipping $$test"; \
+			continue; \
+		fi; \
 		echo Running $$test with Valgrind; \
 		valgrind --track-origins=yes --leak-check=yes  --show-leak-kinds=all --quiet --error-exitcode=1 $$test > /dev/null; \
 		RESULT=$$?; \

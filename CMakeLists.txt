@@ -34,6 +34,7 @@ set(TEST_SOURCES
         testy/pop_on_empty.c
         testy/sleep_big_data.c
         testy/sleep_many_threads.c
+        testy/one_read_one_write.c
 )
 
 set(TEST_INDEX_COUNT_simpleTester 500)
@@ -44,6 +45,7 @@ set(TEST_INDEX_COUNT_should_be_empty 500)
 set(TEST_INDEX_COUNT_pop_on_empty 500)
 set(TEST_INDEX_COUNT_sleep_big_data 50)
 set(TEST_INDEX_COUNT_sleep_many_threads 50)
+set(TEST_INDEX_COUNT_one_read_one_write 500)
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
     get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
