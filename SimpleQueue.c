@@ -33,9 +33,9 @@ SimpleQueue* SimpleQueue_new(void)
     SimpleQueue* queue = (SimpleQueue*)malloc(sizeof(SimpleQueue));
     pthread_mutex_init(&queue->head_mtx, NULL);
     pthread_mutex_init(&queue->tail_mtx, NULL);
-    SimpleQueueNode* foo_node = SimpleQueueNode_new(EMPTY_VALUE); // Strażnik
-    queue->head = foo_node;
-    queue->tail = foo_node;
+    SimpleQueueNode* guard_node = SimpleQueueNode_new(EMPTY_VALUE); // Strażnik
+    queue->head = guard_node;
+    queue->tail = guard_node;
 
     return queue;
 }
@@ -72,16 +72,16 @@ Value SimpleQueue_pop(SimpleQueue* queue)
         return EMPTY_VALUE;
     }
 
-    SimpleQueueNode* foo_node = queue->head;
-    SimpleQueueNode* to_remove = atomic_load(&foo_node->next);
+    SimpleQueueNode* guard_node = queue->head;
+    SimpleQueueNode* to_remove = atomic_load(&guard_node->next);
 
-    // Węzeł do usunięcia zastępujemy przez foo_node
+    // Węzeł do usunięcia zastępujemy przez guard_node
     Value value = to_remove->item;
     to_remove->item = EMPTY_VALUE;
     queue->head = to_remove;
 
     pthread_mutex_unlock(&queue->head_mtx);
-    free(foo_node);
+    free(guard_node);
 
     return value;
 }
