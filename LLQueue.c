@@ -24,7 +24,7 @@ LLNode* LLNode_new(Value item) {
 struct LLQueue {
     AtomicLLNodePtr head;
     AtomicLLNodePtr tail;
-    HazardPointer hp; 
+    HazardPointer hp;
 };
 
 
@@ -41,7 +41,7 @@ void LLQueue_delete(LLQueue* queue) {
 
     while (queue->head != NULL) {
         LLNode* next = atomic_load(&queue->head->next);
-        free(queue->head);
+        free(queue->head); // Tutaj free, bo już nie ma wielowątkowości
         queue->head = next;
     }
 
@@ -53,6 +53,11 @@ void LLQueue_push(LLQueue* queue, Value item) {
     LLNode* new_node = LLNode_new(item);
     while (true) {
         LLNode* tail = atomic_load(&queue->tail);
+        HazardPointer_protect(&queue->hp, tail);
+        if (tail != atomic_load(&queue->tail)) {
+            continue;
+        }
+
         LLNode* expected_null = NULL;
 
         // Za każdym razem oczekujemy, że tail->next to będzie null.
@@ -61,6 +66,8 @@ void LLQueue_push(LLQueue* queue, Value item) {
 
             // W tym miejscu compare_exchange ustawił tail->next na nowy węzeł.
             atomic_compare_exchange_strong(&queue->tail, &tail, new_node); // TODO
+
+            HazardPointer_clear(&queue->hp);
             return;
         }
     }
@@ -71,16 +78,23 @@ Value LLQueue_pop(LLQueue* queue) {
 
     while (true) {
         LLNode* head = atomic_load(&queue->head);
+        HazardPointer_protect(&queue->hp, head);
+        if (head != atomic_load(&queue->head)) {
+            continue;
+        }
+
         LLNode* next = atomic_load(&head->next);
 
         if (next == NULL) {
             return EMPTY_VALUE;
         } else {
-            Value value = next->value;
+            Value value = next->value; // TODO segv
             LLNode* old_head = head;
 
             // Jak w międzyczasie głowa się zmieniła, to będziemy musieli zacząć ponownie.
             if (atomic_compare_exchange_strong(&queue->head, &head, next)) {
+
+                HazardPointer_clear(&queue->hp);
                 HazardPointer_retire(&queue->hp, old_head);
                 return value;
             }

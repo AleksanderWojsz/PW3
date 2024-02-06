@@ -35,24 +35,31 @@ set(TEST_SOURCES
         testy/sleep_big_data.c
         testy/sleep_many_threads.c
         testy/one_read_one_write.c
+        testy/simple.c
+
 )
 
-set(TEST_INDEX_COUNT_simpleTester 500)
-set(TEST_INDEX_COUNT_many_threads 500)
-set(TEST_INDEX_COUNT_big_data 500)
-set(TEST_INDEX_COUNT_is_empty 500)
-set(TEST_INDEX_COUNT_should_be_empty 500)
-set(TEST_INDEX_COUNT_pop_on_empty 500)
-set(TEST_INDEX_COUNT_sleep_big_data 50)
-set(TEST_INDEX_COUNT_sleep_many_threads 50)
-set(TEST_INDEX_COUNT_one_read_one_write 500)
+add_compile_options(-fsanitize=address -Og -g)
+add_link_options(-fsanitize=address -Og -g)
+
+
+# set(TEST_INDEX_COUNT_simpleTester 500)
+# set(TEST_INDEX_COUNT_many_threads 500)
+# set(TEST_INDEX_COUNT_big_data 500)
+# set(TEST_INDEX_COUNT_is_empty 500)
+# set(TEST_INDEX_COUNT_should_be_empty 500)
+# set(TEST_INDEX_COUNT_pop_on_empty 500)
+# set(TEST_INDEX_COUNT_sleep_big_data 50)
+# set(TEST_INDEX_COUNT_sleep_many_threads 50)
+# set(TEST_INDEX_COUNT_one_read_one_write 500)
+set(TEST_INDEX_COUNT_simple 1000)
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
     get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
     add_executable(${TEST_NAME} ${TEST_SOURCE})
     target_link_libraries(${TEST_NAME} PRIVATE queues Threads::Threads atomic)
 
-    set(TEST_COUNT 1000)
+    # set(TEST_COUNT 1000)
 
     if (DEFINED TEST_INDEX_COUNT_${TEST_NAME})
         set(TEST_COUNT ${TEST_INDEX_COUNT_${TEST_NAME}})
