@@ -8,13 +8,11 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "ON" FORCE)
 
-set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -Wno-sign-compare -Wno-unused-parameter -O3 -march=native -fno-exceptions")
+set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -Wno-sign-compare -Wno-unused-parameter -march=native -fno-exceptions") # 03
 
-#add_compile_options(-fsanitize=thread -Og -g)
-#add_link_options(-fsanitize=thread -Og -g)
 
-#add_compile_options(-fsanitize=address -Og -g)
-#add_link_options(-fsanitize=address -Og -g)
+
+
 
 add_library(queues OBJECT SimpleQueue.c RingsQueue.c LLQueue.c BLQueue.c HazardPointer.c)
 target_link_libraries(queues PRIVATE Threads::Threads atomic)
@@ -39,27 +37,30 @@ set(TEST_SOURCES
 
 )
 
-add_compile_options(-fsanitize=address -Og -g)
-add_link_options(-fsanitize=address -Og -g)
+#add_compile_options(-fsanitize=address -Og -g)
+#add_link_options(-fsanitize=address -Og -g)
+
+#add_compile_options(-fsanitize=thread -Og -g)
+#add_link_options(-fsanitize=thread -Og -g)
 
 
 # set(TEST_INDEX_COUNT_simpleTester 500)
 # set(TEST_INDEX_COUNT_many_threads 500)
-# set(TEST_INDEX_COUNT_big_data 500)
+# set(TEST_INDEX_COUNT_big_data 100)
 # set(TEST_INDEX_COUNT_is_empty 500)
 # set(TEST_INDEX_COUNT_should_be_empty 500)
 # set(TEST_INDEX_COUNT_pop_on_empty 500)
 # set(TEST_INDEX_COUNT_sleep_big_data 50)
 # set(TEST_INDEX_COUNT_sleep_many_threads 50)
-# set(TEST_INDEX_COUNT_one_read_one_write 500)
-set(TEST_INDEX_COUNT_simple 1000)
+ set(TEST_INDEX_COUNT_one_read_one_write 5000)
+#set(TEST_INDEX_COUNT_simple 100)
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
     get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
     add_executable(${TEST_NAME} ${TEST_SOURCE})
     target_link_libraries(${TEST_NAME} PRIVATE queues Threads::Threads atomic)
 
-    # set(TEST_COUNT 1000)
+     set(TEST_COUNT 0)
 
     if (DEFINED TEST_INDEX_COUNT_${TEST_NAME})
         set(TEST_COUNT ${TEST_INDEX_COUNT_${TEST_NAME}})

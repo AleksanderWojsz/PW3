@@ -17,7 +17,7 @@ $(TESTS_DIR)/%: $(TESTS_DIR)/%.c $(OBJ)
 
 build: $(OBJ) $(EXE)
 
-test: build
+valgrind: build
 	@for test in $(EXE); do \
 		testname=$$(basename $$test); \
 		if echo $(EXCLUDE_TESTS) | grep -wq $$testname; then \
@@ -25,7 +25,7 @@ test: build
 			continue; \
 		fi; \
 		echo Running $$test with Valgrind; \
-		valgrind --track-origins=yes --leak-check=yes  --show-leak-kinds=all --quiet --error-exitcode=1 $$test > /dev/null; \
+		valgrind --quiet --error-exitcode=1 --tool=helgrind  $$test > /dev/null; \
 		RESULT=$$?; \
 		if [ $$RESULT -eq 0 ]; then \
 			echo "OK"; \
