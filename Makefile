@@ -25,7 +25,7 @@ valgrind: build
 			continue; \
 		fi; \
 		echo Running $$test with Valgrind; \
-		valgrind --quiet --error-exitcode=1 --tool=helgrind  $$test > /dev/null; \
+		valgrind --track-origins=yes --leak-check=yes  --show-leak-kinds=all --quiet --error-exitcode=1 $$test > /dev/null; \
 		RESULT=$$?; \
 		if [ $$RESULT -eq 0 ]; then \
 			echo "OK"; \
