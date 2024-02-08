@@ -31,18 +31,19 @@ const QueueVTable queueVTables[] = {
 //        { "BLQueue", BLQueue_new, BLQueue_push, BLQueue_pop, BLQueue_is_empty, BLQueue_delete }
 };
 
-
 #pragma GCC diagnostic pop
 
-#define THREADS 128
-#define DATA_SIZE 100
+#define THREADS 5
+#define DATA_SIZE 100000
 
-void* queue;
-QueueVTable Q;
+void* queue1;
+void* queue2;
+QueueVTable Q1;
+QueueVTable Q2;
 pthread_t threads[THREADS];
-Value results[THREADS][DATA_SIZE];
+Value results[DATA_SIZE + 1];
 
-
+bool reader_not_finished = true;
 void* basic_test(void* thread_id)
 {
     int id = *(int*)thread_id;
@@ -50,14 +51,37 @@ void* basic_test(void* thread_id)
 
     HazardPointer_register(id, THREADS);
 
-
-    for (int i = 0; i < DATA_SIZE; i++) {
-        Q.push(queue, i + 1);
+    if (id == 3 || id == 4) {
+        for (int i = 1; i <= DATA_SIZE; i++) {
+            Q1.push(queue1, i);
+        }
     }
 
-    for (int i = 0; i < DATA_SIZE; i++) {
-        results[id][i] = Q.pop(queue);
+    if (id == 1 || id == 2) {
+        while (reader_not_finished) {
+            Value v = Q1.pop(queue1);
+            if (v != EMPTY_VALUE) {
+                Q2.push(queue2, v);
+            }
+        }
     }
+
+    if (id == 0) {
+        for (int i = 0; i < DATA_SIZE * 2; i++) {
+            Value v = Q2.pop(queue2);
+            while (v == EMPTY_VALUE) {
+                v = Q2.pop(queue2);
+            }
+            results[v]++;
+        }
+        reader_not_finished = false;
+
+        for (int i = 1; i <= DATA_SIZE; i++) {
+            printf("%d ", results[i]);
+            assert(results[i] == 2);
+        }
+    }
+
 
 
     return NULL;
@@ -66,8 +90,15 @@ void* basic_test(void* thread_id)
 int main(void)
 {
     for (int i = 0; i < sizeof(queueVTables) / sizeof(QueueVTable); ++i) {
-        Q = queueVTables[i];
-        queue = Q.new();
+        Q1 = queueVTables[i];
+        Q2 = queueVTables[i];
+        queue1 = Q1.new();
+        queue2 = Q2.new();
+        reader_not_finished = true;
+
+        for (int j = 0; j < DATA_SIZE + 1; j++) {
+            results[j] = 0;
+        }
 
         for (int j = 0; j < THREADS; j++) {
             int* thread_id = malloc(sizeof(int));
@@ -79,20 +110,10 @@ int main(void)
             pthread_join(threads[j], NULL);
         }
 
-        Q.delete(queue);
+        Q1.delete(queue1);
+        Q2.delete(queue2);
 
-        printf("Queue type: %s\n", Q.name);
-
-        Value suma = 0;
-        for (int j = 0; j < THREADS; j++) {
-            printf("Thread %d: ", j);
-            for (int k = 0; k < DATA_SIZE; k++) {
-                printf("%ld ", results[j][k]);
-                suma += results[j][k];
-            }
-            printf("\n");
-        }
-        assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2));
+        printf("Queue type: %s\n", Q1.name);
     }
 
     return 0;

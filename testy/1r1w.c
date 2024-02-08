@@ -31,11 +31,10 @@ const QueueVTable queueVTables[] = {
 //        { "BLQueue", BLQueue_new, BLQueue_push, BLQueue_pop, BLQueue_is_empty, BLQueue_delete }
 };
 
-
 #pragma GCC diagnostic pop
 
-#define THREADS 128
-#define DATA_SIZE 100
+#define THREADS 2
+#define DATA_SIZE 1000000
 
 void* queue;
 QueueVTable Q;
@@ -50,13 +49,19 @@ void* basic_test(void* thread_id)
 
     HazardPointer_register(id, THREADS);
 
-
-    for (int i = 0; i < DATA_SIZE; i++) {
-        Q.push(queue, i + 1);
+    if (id % 2 == 0) {
+        for (int i = 0; i < DATA_SIZE; i++) {
+            Q.push(queue, i + 1);
+        }
     }
-
-    for (int i = 0; i < DATA_SIZE; i++) {
-        results[id][i] = Q.pop(queue);
+    else {
+        for (int i = 0; i < DATA_SIZE; i++) {
+            Value v = Q.pop(queue);
+            while (v == EMPTY_VALUE) {
+                v = Q.pop(queue);
+            }
+            results[id][i] = v;
+        }
     }
 
 
@@ -83,16 +88,16 @@ int main(void)
 
         printf("Queue type: %s\n", Q.name);
 
-        Value suma = 0;
+        unsigned long long int suma = 0;
         for (int j = 0; j < THREADS; j++) {
-            printf("Thread %d: ", j);
+//            printf("Thread %d: ", j);
             for (int k = 0; k < DATA_SIZE; k++) {
-                printf("%ld ", results[j][k]);
+//                printf("%ld ", results[j][k]);
                 suma += results[j][k];
             }
             printf("\n");
         }
-        assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2));
+        assert(suma == ((unsigned long long int)THREADS / 2) * (unsigned long long int)DATA_SIZE * ((unsigned long long int)DATA_SIZE + 1) / 2);
     }
 
     return 0;

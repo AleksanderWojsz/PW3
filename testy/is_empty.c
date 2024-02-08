@@ -3,12 +3,11 @@
 #include <malloc.h>
 #include <assert.h>
 
+#include "../BLQueue.h"
+#include "../HazardPointer.h"
+#include "../LLQueue.h"
 #include "../SimpleQueue.h"
 #include "../RingsQueue.h"
-#include "../BLQueue.h"
-#include "../LLQueue.h"
-#include "../HazardPointer.h"
-
 
 // A structure holding function pointers to methods of some queue type.
 struct QueueVTable {
@@ -34,7 +33,7 @@ const QueueVTable queueVTables[] = {
 
 #pragma GCC diagnostic pop
 
-#define THREADS 128
+#define THREADS 16
 #define DATA_SIZE 100
 
 void* queue;
@@ -50,12 +49,14 @@ void* basic_test(void* thread_id)
 
     HazardPointer_register(id, THREADS);
 
-
+    // Każdy wątek dodaje do kolejki liczby od 0 do DATA_SIZE
     for (int i = 0; i < DATA_SIZE; i++) {
         Q.push(queue, i + 1);
     }
 
+    // Wątek czyta DATA_SIZE liczb i zapisuje je
     for (int i = 0; i < DATA_SIZE; i++) {
+        assert(Q.is_empty(queue) == false);
         results[id][i] = Q.pop(queue);
     }
 
@@ -92,8 +93,9 @@ int main(void)
             }
             printf("\n");
         }
-        assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2));
+        assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2)); // Sprawdzenie, czy suma wszystkich liczb odczytanych przez wszystkie wątki się zgadza
     }
 
     return 0;
 }
+

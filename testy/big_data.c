@@ -31,11 +31,10 @@ const QueueVTable queueVTables[] = {
 //        { "BLQueue", BLQueue_new, BLQueue_push, BLQueue_pop, BLQueue_is_empty, BLQueue_delete }
 };
 
-
 #pragma GCC diagnostic pop
 
-#define THREADS 128
-#define DATA_SIZE 100
+#define THREADS 4
+#define DATA_SIZE 10000
 
 void* queue;
 QueueVTable Q;

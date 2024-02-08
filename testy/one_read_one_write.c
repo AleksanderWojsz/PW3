@@ -31,11 +31,10 @@ const QueueVTable queueVTables[] = {
 //        { "BLQueue", BLQueue_new, BLQueue_push, BLQueue_pop, BLQueue_is_empty, BLQueue_delete }
 };
 
-
 #pragma GCC diagnostic pop
 
-#define THREADS 128
-#define DATA_SIZE 100
+#define THREADS 16 // musi być parzyste
+#define DATA_SIZE 1000
 
 void* queue;
 QueueVTable Q;
@@ -45,26 +44,45 @@ Value results[THREADS][DATA_SIZE];
 
 void* basic_test(void* thread_id)
 {
+    fflush(stdout);
+
     int id = *(int*)thread_id;
     free(thread_id);
 
     HazardPointer_register(id, THREADS);
 
 
-    for (int i = 0; i < DATA_SIZE; i++) {
-        Q.push(queue, i + 1);
-    }
+    if (id % 2 == 0) {
+        for (int i = 0; i < DATA_SIZE; i++) {
+            while (Q.is_empty(queue) == false) {
+                // aktywne czekanie az kolejka bedzie pusta
+            }
+            Q.push(queue, i + 1);
+        }
+    } else {
+        for (int i = 0; i < DATA_SIZE; i++) {
+            while (Q.is_empty(queue) == true) { // Z tej pętli mogą wyjść dwa jednocześnie i tylko jeden odczyta
+                // aktywne czekanie az cos bedzie w kolejce
+            }
 
-    for (int i = 0; i < DATA_SIZE; i++) {
-        results[id][i] = Q.pop(queue);
+            results[id][i] = Q.pop(queue);
+            if (results[id][i] == EMPTY_VALUE) {
+                i--;
+            }
+        }
     }
-
 
     return NULL;
 }
 
 int main(void)
 {
+    for (int i = 0; i < THREADS; i++) {
+        for (int j = 0; j < DATA_SIZE; j++) {
+            results[i][j] = 0;
+        }
+    }
+
     for (int i = 0; i < sizeof(queueVTables) / sizeof(QueueVTable); ++i) {
         Q = queueVTables[i];
         queue = Q.new();
@@ -92,7 +110,7 @@ int main(void)
             }
             printf("\n");
         }
-        assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2));
+        assert(suma == (THREADS / 2) *  DATA_SIZE * (DATA_SIZE + 1) / 2);
     }
 
     return 0;

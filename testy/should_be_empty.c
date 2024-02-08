@@ -9,7 +9,6 @@
 #include "../LLQueue.h"
 #include "../HazardPointer.h"
 
-
 // A structure holding function pointers to methods of some queue type.
 struct QueueVTable {
     const char* name;
@@ -31,10 +30,9 @@ const QueueVTable queueVTables[] = {
 //        { "BLQueue", BLQueue_new, BLQueue_push, BLQueue_pop, BLQueue_is_empty, BLQueue_delete }
 };
 
-
 #pragma GCC diagnostic pop
 
-#define THREADS 128
+#define THREADS 16
 #define DATA_SIZE 100
 
 void* queue;
@@ -47,16 +45,12 @@ void* basic_test(void* thread_id)
 {
     int id = *(int*)thread_id;
     free(thread_id);
-
     HazardPointer_register(id, THREADS);
 
 
-    for (int i = 0; i < DATA_SIZE; i++) {
-        Q.push(queue, i + 1);
-    }
 
     for (int i = 0; i < DATA_SIZE; i++) {
-        results[id][i] = Q.pop(queue);
+        assert(Q.is_empty(queue) == true);
     }
 
 
@@ -82,18 +76,8 @@ int main(void)
         Q.delete(queue);
 
         printf("Queue type: %s\n", Q.name);
-
-        Value suma = 0;
-        for (int j = 0; j < THREADS; j++) {
-            printf("Thread %d: ", j);
-            for (int k = 0; k < DATA_SIZE; k++) {
-                printf("%ld ", results[j][k]);
-                suma += results[j][k];
-            }
-            printf("\n");
-        }
-        assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2));
     }
 
     return 0;
 }
+

@@ -1,0 +1,8 @@
+cmake .
+make
+./tester
+
+
+make valgrind - bez address sanitizera
+
+zmieniony timeout na 100s
