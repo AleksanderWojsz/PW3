@@ -60,6 +60,7 @@ void* basic_test(void* thread_id)
             while (v == EMPTY_VALUE) {
                 v = Q.pop(queue);
             }
+            assert(v == i + 1);
             results[id][i] = v;
         }
     }

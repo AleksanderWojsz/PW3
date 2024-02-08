@@ -45,16 +45,15 @@ set(TEST_SOURCES
 add_compile_options(-fsanitize=address -Og -g)
 add_link_options(-fsanitize=address -Og -g)
 
+# set(TEST_INDEX_COUNT_simpleTester 500)
 # set(TEST_INDEX_COUNT_many_threads 500)
 # set(TEST_INDEX_COUNT_big_data 100)
 # set(TEST_INDEX_COUNT_is_empty 500)
 # set(TEST_INDEX_COUNT_should_be_empty 500)
 # set(TEST_INDEX_COUNT_pop_on_empty 500)
 # set(TEST_INDEX_COUNT_one_read_one_write 500)
-# set(TEST_INDEX_COUNT_simple 500)
 
- set(TEST_INDEX_COUNT_simpleTester 500)
-
+set(TEST_INDEX_COUNT_simple 500)
 # set(TEST_INDEX_COUNT_sleep_big_data 10)
 # set(TEST_INDEX_COUNT_sleep_many_threads 10)
 # set(TEST_INDEX_COUNT_1r1w 10)
