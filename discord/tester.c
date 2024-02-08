@@ -22,9 +22,9 @@
 
 const QueueVTable queueVTables[] = {
 //        MakeVTable(SimpleQueue),
-        MakeVTable(RingsQueue),
+//        MakeVTable(RingsQueue),
 //        MakeVTable(LLQueue),
-//        MakeVTable(BLQueue)
+        MakeVTable(BLQueue)
 };
 
 #pragma GCC diagnostic pop
