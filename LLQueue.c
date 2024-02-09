@@ -1,7 +1,6 @@
 #include <malloc.h>
 #include <stdatomic.h>
 #include <stdbool.h>
-#include <assert.h>
 
 #include "HazardPointer.h"
 #include "LLQueue.h"
@@ -26,7 +25,7 @@ struct LLQueue {
     AtomicLLNodePtr head;
     AtomicLLNodePtr tail;
     HazardPointer hp;
-    _Atomic unsigned long long int head_counter;
+    _Atomic int head_counter;
 };
 
 
@@ -99,6 +98,10 @@ Value LLQueue_pop(LLQueue* queue) {
 
         if (atomic_compare_exchange_strong(&queue->head, &head, next) == true) {
             atomic_fetch_add(&queue->head_counter, 1);
+            if (atomic_load(&queue->head_counter) > 1048576) { // Żeby nie wyjść poza zakres (1048576 = 2^20)
+                atomic_store(&queue->head_counter, 0);
+            }
+
             HazardPointer_retire(&queue->hp, head);
             return value;
         }
