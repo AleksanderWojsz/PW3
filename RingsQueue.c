@@ -9,6 +9,7 @@
 #include "HazardPointer.h"
 #include "RingsQueue.h"
 
+
 struct RingsQueueNode;
 typedef struct RingsQueueNode RingsQueueNode;
 

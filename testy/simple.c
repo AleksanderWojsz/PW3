@@ -33,13 +33,13 @@ const QueueVTable queueVTables[] = {
 
 #pragma GCC diagnostic pop
 
-#define THREADS 2
+#define THREADS 4
 #define DATA_SIZE 10000
 
 void* queue;
 QueueVTable Q;
 pthread_t threads[THREADS];
-_Atomic Value results[DATA_SIZE + 1];
+Value results[THREADS][DATA_SIZE];
 
 
 void* basic_test(void* thread_id)
@@ -49,12 +49,13 @@ void* basic_test(void* thread_id)
 
     HazardPointer_register(id, THREADS);
 
+
     for (int i = 0; i < DATA_SIZE; i++) {
         Q.push(queue, i + 1);
     }
 
     for (int i = 0; i < DATA_SIZE; i++) {
-        results[Q.pop(queue)]++;
+        results[id][i] = Q.pop(queue);
     }
 
 
@@ -66,10 +67,6 @@ int main(void)
     for (int i = 0; i < sizeof(queueVTables) / sizeof(QueueVTable); ++i) {
         Q = queueVTables[i];
         queue = Q.new();
-
-        for (int j = 0; j < DATA_SIZE + 1; j++) {
-            results[j] = 0;
-        }
 
         for (int j = 0; j < THREADS; j++) {
             int* thread_id = malloc(sizeof(int));
@@ -85,16 +82,16 @@ int main(void)
 
         printf("Queue type: %s\n", Q.name);
 
-        for (int j = 1; j <= DATA_SIZE; j++) {
-            if (results[j] != THREADS) {
-                printf("BLAD - Wartosc %d wystpila %d razy\n", j, results[j]);
-                for (int k = 1; k <= DATA_SIZE; k++) {
-                    printf("%d ", results[k]);
-                }
-                printf("\n");
-                break;
+        Value suma = 0;
+        for (int j = 0; j < THREADS; j++) {
+//            printf("Thread %d: ", j);
+            for (int k = 0; k < DATA_SIZE; k++) {
+//                printf("%ld ", results[j][k]);
+                suma += results[j][k];
             }
+            printf("\n");
         }
+        assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2));
     }
 
     return 0;

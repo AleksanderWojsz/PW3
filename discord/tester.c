@@ -66,7 +66,7 @@ int main(int argc, char** argv)
                     }
                 }
                 sigaction(SIGALRM, &(struct sigaction){.sa_sigaction = timeouts, .sa_flags = SA_SIGINFO}, NULL);
-                alarm(15);
+                alarm(1500);
                 QueueVTable Q = queueVTables[i];
                 queue_name = Q.name;
                 clock_t start, end;

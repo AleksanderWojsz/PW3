@@ -2,7 +2,6 @@
 #include <pthread.h>
 #include <stdatomic.h>
 
-#include "HazardPointer.h"
 #include "SimpleQueue.h"
 
 struct SimpleQueueNode;

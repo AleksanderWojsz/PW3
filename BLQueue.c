@@ -2,9 +2,7 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
+#include <stdint.h>
 
 #include "BLQueue.h"
 #include "HazardPointer.h"
@@ -65,11 +63,16 @@ void BLQueue_push(BLQueue* queue, Value item)
 {
     while (true) {
         BLNode* tail = atomic_load(&queue->tail);
+        HazardPointer_protect(&queue->hp, &tail);
+        if (atomic_load(&queue->tail) != tail) {
+            continue;
+        }
         _Atomic(long long int) push_idx_before_inc = atomic_fetch_add(&tail->push_idx, 1);
 
         if (push_idx_before_inc < BUFFER_SIZE) { // jest miejsca w buforze
             Value expected_empty = EMPTY_VALUE;
             if (atomic_compare_exchange_strong(&tail->buffer[push_idx_before_inc], &expected_empty, item)) { // spodziewamy się EMPTY_VALUE
+                HazardPointer_clear(&queue->hp);
                 return;
             }
         }
@@ -84,6 +87,7 @@ void BLQueue_push(BLQueue* queue, Value item)
                 BLNode* expected_null = NULL;
                 if (atomic_compare_exchange_strong(&tail->next, &expected_null, new_node)) {
                     atomic_compare_exchange_strong(&queue->tail, &tail, new_node);
+                    HazardPointer_clear(&queue->hp);
                     return;
                 }
                 else {
@@ -99,6 +103,11 @@ Value BLQueue_pop(BLQueue* queue)
 {
     while (true) {
         BLNode* head = atomic_load(&queue->head);
+        HazardPointer_protect(&queue->hp, &head);
+        if (atomic_load(&queue->head) != head) {
+            continue;
+        }
+
         _Atomic(long long int) pop_idx_before_inc = atomic_fetch_add(&head->pop_idx, 1);
 
         if (pop_idx_before_inc < BUFFER_SIZE) { // Potencjalnie coś jeszcze może być
@@ -107,9 +116,11 @@ Value BLQueue_pop(BLQueue* queue)
                 Value v = atomic_load(&head->buffer[pop_idx_before_inc]);
                 if (atomic_compare_exchange_strong(&head->buffer[pop_idx_before_inc], &v, TAKEN_VALUE)) {
                     if (v != EMPTY_VALUE) {
+                        HazardPointer_clear(&queue->hp);
                         return v;
                     }
                     else {
+                        HazardPointer_clear(&queue->hp);
                         return EMPTY_VALUE; // TODO
                     }
                 }
@@ -117,8 +128,12 @@ Value BLQueue_pop(BLQueue* queue)
         }
         else { // W buforze nic nie ma
             if (head->next != NULL) { // Przechodzimy do następnego węzła
-                atomic_compare_exchange_strong(&queue->head, &head, head->next);
+                BLNode* next = head->next;
+                if (atomic_compare_exchange_strong(&queue->head, &head, next)) { // TODO pozamieniac na next
+                    HazardPointer_retire(&queue->hp, head);
+                }
             } else {
+                HazardPointer_clear(&queue->hp);
                 return EMPTY_VALUE;
             }
         }
@@ -127,19 +142,18 @@ Value BLQueue_pop(BLQueue* queue)
 
 bool BLQueue_is_empty(BLQueue* queue)
 {
-    BLNode* head = atomic_load(&queue->head);
-    _Atomic(long long int) pop_idx= atomic_load(&head->pop_idx);
-
-    if (pop_idx < BUFFER_SIZE) {
-        if (atomic_load(&head->buffer[pop_idx]) == EMPTY_VALUE) {
-            return true;
+    while (true) {
+        BLNode* head = atomic_load(&queue->head);
+        HazardPointer_protect(&queue->hp, &head);
+        if (atomic_load(&queue->head) != head) {
+            continue;
         }
-    }
-    else { // W buforze nic nie ma
-        if (head->next == NULL) {
-            return true;
-        }
-    }
+        _Atomic(long long int) pop_idx= atomic_load(&head->pop_idx);
 
-    return false;
+        bool result = ((pop_idx >= BUFFER_SIZE && head->next == NULL) ||
+                (pop_idx < BUFFER_SIZE && atomic_load(&head->buffer[pop_idx]) == EMPTY_VALUE));
+
+        HazardPointer_clear(&queue->hp);
+        return result;
+    }
 }

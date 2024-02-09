@@ -40,8 +40,7 @@ const QueueVTable queueVTables[] = {
 void* queue;
 QueueVTable Q;
 pthread_t threads[THREADS];
-Value results[THREADS][DATA_SIZE];
-
+Value results[THREADS][DATA_SIZE + 1];
 
 void* basic_test(void* thread_id)
 {
