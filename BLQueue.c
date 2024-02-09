@@ -2,8 +2,9 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
-#include <assert.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
 
 #include "BLQueue.h"
 #include "HazardPointer.h"
@@ -48,6 +49,18 @@ BLQueue* BLQueue_new(void)
     return queue;
 }
 
+void BLQueue_delete(BLQueue* queue)
+{
+    while (queue->head != NULL) {
+        BLNode* next = atomic_load(&queue->head->next);
+        free(queue->head); // Tutaj free, bo już nie ma wielowątkowości
+        queue->head = next;
+    }
+
+    HazardPointer_finalize(&queue->hp);
+    free(queue);
+}
+
 void BLQueue_push(BLQueue* queue, Value item)
 {
     while (true) {
@@ -74,12 +87,13 @@ void BLQueue_push(BLQueue* queue, Value item)
                     return;
                 }
                 else {
-//                    free(new_node);
+                    free(new_node);
                 }
             }
         }
     }
 }
+
 
 Value BLQueue_pop(BLQueue* queue)
 {
@@ -88,13 +102,17 @@ Value BLQueue_pop(BLQueue* queue)
         _Atomic(long long int) pop_idx_before_inc = atomic_fetch_add(&head->pop_idx, 1);
 
         if (pop_idx_before_inc < BUFFER_SIZE) { // Potencjalnie coś jeszcze może być
-            Value v = atomic_load(&head->buffer[pop_idx_before_inc]);
-            atomic_store(&head->buffer[pop_idx_before_inc], TAKEN_VALUE);
-            if (v != EMPTY_VALUE) {
-                return v;
-            }
-            else {
-                return EMPTY_VALUE; // TODO
+
+            while (true) {
+                Value v = atomic_load(&head->buffer[pop_idx_before_inc]);
+                if (atomic_compare_exchange_strong(&head->buffer[pop_idx_before_inc], &v, TAKEN_VALUE)) {
+                    if (v != EMPTY_VALUE) {
+                        return v;
+                    }
+                    else {
+                        return EMPTY_VALUE; // TODO
+                    }
+                }
             }
         }
         else { // W buforze nic nie ma
@@ -124,10 +142,4 @@ bool BLQueue_is_empty(BLQueue* queue)
     }
 
     return false;
-}
-
-void BLQueue_delete(BLQueue* queue)
-{
-    // TODO
-    free(queue);
 }

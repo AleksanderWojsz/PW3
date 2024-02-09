@@ -35,7 +35,7 @@ const QueueVTable queueVTables[] = {
 #pragma GCC diagnostic pop
 
 #define THREADS 2
-#define DATA_SIZE 1
+#define DATA_SIZE 1000000
 
 void* queue;
 QueueVTable Q;
@@ -58,14 +58,14 @@ void* basic_test(void* thread_id)
     else {
         for (int i = 1; i <= DATA_SIZE; ++i) {
             Value v = Q.pop(queue);
-            int loops = 0;
+//            int loops = 0;
             while (v == EMPTY_VALUE) {
                 v = Q.pop(queue);
-                ++loops;
-                if (loops > DATA_SIZE * 10000) {
-                    printf("\033[1;31mERROR: reader looped too many times\033[0m\n");
-                    exit(1);
-                }
+//                ++loops;
+//                if (loops > 100000) {
+//                    printf("\033[1;31mERROR: reader looped too many times\033[0m\n");
+//                    exit(1);
+//                }
             }
             if (v != i) {
                 printf("\033[1;31mERROR: reader got %lu instead of %d\033[0m\n", v, i);

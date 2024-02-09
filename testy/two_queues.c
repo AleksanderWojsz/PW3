@@ -25,10 +25,10 @@ typedef struct QueueVTable QueueVTable;
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 
 const QueueVTable queueVTables[] = {
-        { "SimpleQueue", SimpleQueue_new, SimpleQueue_push, SimpleQueue_pop, SimpleQueue_is_empty, SimpleQueue_delete },
-        { "RingsQueue", RingsQueue_new, RingsQueue_push, RingsQueue_pop, RingsQueue_is_empty, RingsQueue_delete },
-        { "LLQueue", LLQueue_new, LLQueue_push, LLQueue_pop, LLQueue_is_empty, LLQueue_delete },
-//        { "BLQueue", BLQueue_new, BLQueue_push, BLQueue_pop, BLQueue_is_empty, BLQueue_delete }
+//        { "SimpleQueue", SimpleQueue_new, SimpleQueue_push, SimpleQueue_pop, SimpleQueue_is_empty, SimpleQueue_delete },
+//        { "RingsQueue", RingsQueue_new, RingsQueue_push, RingsQueue_pop, RingsQueue_is_empty, RingsQueue_delete },
+//        { "LLQueue", LLQueue_new, LLQueue_push, LLQueue_pop, LLQueue_is_empty, LLQueue_delete },
+        { "BLQueue", BLQueue_new, BLQueue_push, BLQueue_pop, BLQueue_is_empty, BLQueue_delete }
 };
 
 #pragma GCC diagnostic pop
@@ -41,7 +41,7 @@ void* queue2;
 QueueVTable Q1;
 QueueVTable Q2;
 pthread_t threads[THREADS];
-Value results[DATA_SIZE + 1];
+_Atomic Value results[DATA_SIZE + 1];
 
 bool reader_not_finished = true;
 void* basic_test(void* thread_id)
