@@ -24,9 +24,9 @@ typedef struct QueueVTable QueueVTable;
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 
 const QueueVTable queueVTables[] = {
-//        { "SimpleQueue", SimpleQueue_new, SimpleQueue_push, SimpleQueue_pop, SimpleQueue_is_empty, SimpleQueue_delete },
-//        { "RingsQueue", RingsQueue_new, RingsQueue_push, RingsQueue_pop, RingsQueue_is_empty, RingsQueue_delete },
-//        { "LLQueue", LLQueue_new, LLQueue_push, LLQueue_pop, LLQueue_is_empty, LLQueue_delete },
+        { "SimpleQueue", SimpleQueue_new, SimpleQueue_push, SimpleQueue_pop, SimpleQueue_is_empty, SimpleQueue_delete },
+        { "RingsQueue", RingsQueue_new, RingsQueue_push, RingsQueue_pop, RingsQueue_is_empty, RingsQueue_delete },
+        { "LLQueue", LLQueue_new, LLQueue_push, LLQueue_pop, LLQueue_is_empty, LLQueue_delete },
         { "BLQueue", BLQueue_new, BLQueue_push, BLQueue_pop, BLQueue_is_empty, BLQueue_delete }
 };
 
@@ -86,9 +86,9 @@ int main(void)
 
         Value suma = 0;
         for (int j = 0; j < THREADS; j++) {
-            printf("Thread %d: ", j);
+//            printf("Thread %d: ", j);
             for (int k = 0; k < DATA_SIZE; k++) {
-                printf("%ld ", results[j][k]);
+//                printf("%ld ", results[j][k]);
                 suma += results[j][k];
             }
             printf("\n");

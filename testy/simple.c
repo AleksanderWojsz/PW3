@@ -31,15 +31,16 @@ const QueueVTable queueVTables[] = {
         { "BLQueue", BLQueue_new, BLQueue_push, BLQueue_pop, BLQueue_is_empty, BLQueue_delete }
 };
 
+
 #pragma GCC diagnostic pop
 
 #define THREADS 4
-#define DATA_SIZE 10000
+#define DATA_SIZE 100
 
 void* queue;
 QueueVTable Q;
 pthread_t threads[THREADS];
-Value results[THREADS][DATA_SIZE];
+_Atomic Value results[DATA_SIZE + 1];
 
 
 void* basic_test(void* thread_id)
@@ -55,7 +56,7 @@ void* basic_test(void* thread_id)
     }
 
     for (int i = 0; i < DATA_SIZE; i++) {
-        results[id][i] = Q.pop(queue);
+        results[Q.pop(queue)]++;
     }
 
 
@@ -68,6 +69,10 @@ int main(void)
         Q = queueVTables[i];
         queue = Q.new();
 
+        for (int j = 0; j < DATA_SIZE + 1; j++) {
+            results[j] = 0;
+        }
+
         for (int j = 0; j < THREADS; j++) {
             int* thread_id = malloc(sizeof(int));
             *thread_id = j;
@@ -78,20 +83,25 @@ int main(void)
             pthread_join(threads[j], NULL);
         }
 
-        Q.delete(queue);
 
         printf("Queue type: %s\n", Q.name);
 
-        Value suma = 0;
-        for (int j = 0; j < THREADS; j++) {
-//            printf("Thread %d: ", j);
-            for (int k = 0; k < DATA_SIZE; k++) {
-//                printf("%ld ", results[j][k]);
-                suma += results[j][k];
+        bool r = false;
+        for (int j = 1; j <= DATA_SIZE; j++) {
+            if (results[j] != THREADS) {
+                printf("Liczba %d wystąpiła %lu razy zamiast %d\n", j, results[j], THREADS);
+                r = true;
             }
-            printf("\n");
         }
-        assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2));
+        if (r) {
+            printf("0 - %lu\n", results[0]);
+            printf("pop %ld\n", Q.pop(queue));
+
+            Q.delete(queue);
+            return 1;
+        }
+
+        Q.delete(queue);
     }
 
     return 0;

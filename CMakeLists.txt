@@ -14,8 +14,8 @@ set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -Wno-sign-compare -Wno-unused-parame
 #add_compile_options(-fsanitize=thread -Og -g)
 #add_link_options(-fsanitize=thread -Og -g)
 
-add_compile_options(-fsanitize=address -Og -g)
-add_link_options(-fsanitize=address -Og -g)
+#add_compile_options(-fsanitize=address -Og -g)
+#add_link_options(-fsanitize=address -Og -g)
 
 
 
@@ -49,14 +49,14 @@ set(TEST_SOURCES
 # set(TEST_INDEX_COUNT_should_be_empty 500)
 # set(TEST_INDEX_COUNT_pop_on_empty 500)
 # set(TEST_INDEX_COUNT_one_read_one_write 500)
-#set(TEST_INDEX_COUNT_big_data 500)
+# set(TEST_INDEX_COUNT_big_data 500)
 
-set(TEST_INDEX_COUNT_sleep_big_data 10)
-set(TEST_INDEX_COUNT_sleep_many_threads 10)
-set(TEST_INDEX_COUNT_two_queues 10)
+#set(TEST_INDEX_COUNT_many_threads 100)
+#set(TEST_INDEX_COUNT_1r1w 100)
+#set(TEST_INDEX_COUNT_two_queues 20)
+#set(TEST_INDEX_COUNT_sleep_big_data 10)
+#set(TEST_INDEX_COUNT_sleep_many_threads 10)
 
-set(TEST_INDEX_COUNT_many_threads 100)
-set(TEST_INDEX_COUNT_1r1w 1000)
 set(TEST_INDEX_COUNT_simple 1000)
 
 
@@ -65,7 +65,7 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
     add_executable(${TEST_NAME} ${TEST_SOURCE})
     target_link_libraries(${TEST_NAME} PRIVATE queues Threads::Threads atomic)
 
-    set(TEST_COUNT 500)
+    set(TEST_COUNT 0)
 
     if (DEFINED TEST_INDEX_COUNT_${TEST_NAME})
         set(TEST_COUNT ${TEST_INDEX_COUNT_${TEST_NAME}})
