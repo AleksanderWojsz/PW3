@@ -1,14 +1,10 @@
 #include <malloc.h>
 #include <pthread.h>
 #include <stdatomic.h>
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
-
 #include "HazardPointer.h"
 #include "RingsQueue.h"
-
 
 struct RingsQueueNode;
 typedef struct RingsQueueNode RingsQueueNode;
@@ -39,9 +35,6 @@ struct RingsQueue {
     pthread_mutex_t push_mtx;
 };
 
-//int tab[1000000][3];
-//int expected = 1;
-//int licznik = 0;
 RingsQueue* RingsQueue_new(void)
 {
     RingsQueue* queue = (RingsQueue*)malloc(sizeof(RingsQueue));
@@ -50,12 +43,6 @@ RingsQueue* RingsQueue_new(void)
     queue->tail = first_node;
     pthread_mutex_init(&queue->pop_mtx, NULL);
     pthread_mutex_init(&queue->push_mtx, NULL);
-
-//    for (int i = 0; i < 1000000; i++) {
-//        tab[i][0] = 0;
-//        tab[i][1] = 0;
-//        tab[i][2] = 0;
-//    }
 
     return queue;
 }
@@ -78,25 +65,19 @@ void RingsQueue_push(RingsQueue* queue, Value item)
 {
     pthread_mutex_lock(&queue->push_mtx);
     RingsQueueNode* tail = queue->tail;
-    assert(tail->push_idx - tail->pop_idx <= RING_SIZE);
-    assert(tail->push_idx - tail->pop_idx >= 0);
 
-    // nie ma miejsca
-    if (atomic_load(&tail->push_idx) - atomic_load(&tail->pop_idx) == RING_SIZE) {
+    if (atomic_load(&tail->push_idx) - atomic_load(&tail->pop_idx) >= RING_SIZE) { // Nie ma miejsca
         RingsQueueNode* new_node = RingsQueueNode_new();
+        atomic_fetch_add(&new_node->push_idx, 1);
+        new_node->buffer[0] = item;
         atomic_store(&tail->next, new_node);
         queue->tail = new_node; // Nie trzeba martwić się, że drugi wątek nagle odczyta cały bufor i zrobi free node'a w którym jesteśmy, bo może to zrobić, dopiero jak będzie istniał następny node, a wtedy już w nim będziemy
     }
-
-    tail = queue->tail;
-    long long int push_idx = atomic_load(&tail->push_idx);
-    tail->buffer[push_idx % RING_SIZE] = item;
-    atomic_fetch_add(&tail->push_idx, 1);
-
-//    tab[licznik][0] = item;
-//    tab[licznik][1] = push_idx % RING_SIZE;
-//    tab[licznik][2] = push_idx - tail->pop_idx;
-//    licznik++;
+    else {
+        tail = queue->tail;
+        tail->buffer[atomic_load(&tail->push_idx) % RING_SIZE] = item;
+        atomic_fetch_add(&tail->push_idx, 1);
+    }
 
     pthread_mutex_unlock(&queue->push_mtx);
 }
@@ -104,14 +85,12 @@ void RingsQueue_push(RingsQueue* queue, Value item)
 Value RingsQueue_pop(RingsQueue* queue)
 {
     pthread_mutex_lock(&queue->pop_mtx);
-    assert(queue->head->push_idx - queue->head->pop_idx <= RING_SIZE); // TODO usunąć
-    assert(queue->head->push_idx - queue->head->pop_idx >= 0); // TODO czasami assertion failed
 
-    if (atomic_load(&queue->head->push_idx) - atomic_load(&queue->head->pop_idx) == 0){ // Węzeł jest pusty
-        if (atomic_load(&queue->head->next) != NULL && queue->head != queue->tail && atomic_load(&queue->head->push_idx) - atomic_load(&queue->head->pop_idx) == 0) { // Ma następnika. // Przechodzimy dalej, tylko jak tail jest już w następnym węźle i u nas jest pusto
-            RingsQueueNode* old_head = queue->head;
-            queue->head = atomic_load(&queue->head->next);
-            free(old_head);
+    RingsQueueNode* head = queue->head;
+    if (atomic_load(&head->push_idx) - atomic_load(&head->pop_idx) <= 0){ // Węzeł jest pusty
+        if (atomic_load(&head->next) != NULL && head != queue->tail && atomic_load(&head->push_idx) - atomic_load(&head->pop_idx) <= 0) { // Ma następnika. // Przechodzimy dalej, tylko jak tail jest już w następnym węźle i u nas jest pusto
+            queue->head = atomic_load(&head->next);
+            free(head);
         }
         else {
             pthread_mutex_unlock(&queue->pop_mtx);
@@ -119,27 +98,10 @@ Value RingsQueue_pop(RingsQueue* queue)
         }
     }
 
-    Value v = queue->head->buffer[atomic_load(&queue->head->pop_idx) % RING_SIZE];
+    head = queue->head;
+    Value v = head->buffer[atomic_load(&head->pop_idx) % RING_SIZE];
 
-//    if (v != EMPTY_VALUE && v != expected) {
-//        printf("Zle jest %d, powinno byc %d; %d\n", v, expected, queue->head->pop_idx);
-//        for (int i = 0; i < RING_SIZE; i++) {
-//            printf("%d ", queue->head->buffer[i]);
-//        }
-//        printf("\n");
-//        printf("\n");
-//        printf("\n");
-//        for (int i = 0; i < 1000000; i++) {
-//            printf("item: %d, index: %d, zajęte miejsca: %d\n", tab[i][0], tab[i][1], tab[i][2]);
-//        }
-//
-//        exit(1);
-//    }
-//    if (v != EMPTY_VALUE) {
-//        expected++;
-//    }
-
-    atomic_fetch_add(&queue->head->pop_idx, 1); // TODO mutexy dookoła tego rozwiązują problem
+    atomic_fetch_add(&head->pop_idx, 1);
     pthread_mutex_unlock(&queue->pop_mtx);
 
     return v;
@@ -148,7 +110,8 @@ Value RingsQueue_pop(RingsQueue* queue)
 bool RingsQueue_is_empty(RingsQueue* queue)
 {
     pthread_mutex_lock(&queue->pop_mtx);
-    bool result = atomic_load(&queue->head->push_idx) - atomic_load(&queue->head->pop_idx) == 0 && atomic_load(&queue->head->next) == NULL;
+    RingsQueueNode* head = queue->head;
+    bool result = atomic_load(&head->push_idx) - atomic_load(&head->pop_idx) <= 0 && atomic_load(&head->next) == NULL;
     pthread_mutex_unlock(&queue->pop_mtx);
 
     return result;
