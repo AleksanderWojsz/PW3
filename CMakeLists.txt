@@ -57,7 +57,7 @@ set(TEST_SOURCES
 #set(TEST_INDEX_COUNT_sleep_big_data 10)
 #set(TEST_INDEX_COUNT_sleep_many_threads 10)
 
-set(TEST_INDEX_COUNT_simple 1000)
+set(TEST_INDEX_COUNT_simple 10000)
 
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
