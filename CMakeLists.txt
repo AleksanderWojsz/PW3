@@ -33,7 +33,7 @@ set(TEST_SOURCES
         testy/many_threads.c
         testy/big_data.c
         testy/is_empty.c
-        testy/should_be_empty.c
+        testy/should_not_be_empty.c
         testy/pop_on_empty.c
         testy/sleep_big_data.c
         testy/sleep_many_threads.c
@@ -46,7 +46,6 @@ set(TEST_SOURCES
 
 # set(TEST_INDEX_COUNT_simpleTester 500)
 # set(TEST_INDEX_COUNT_is_empty 500)
-# set(TEST_INDEX_COUNT_should_be_empty 500)
 # set(TEST_INDEX_COUNT_pop_on_empty 500)
 # set(TEST_INDEX_COUNT_one_read_one_write 500)
 # set(TEST_INDEX_COUNT_big_data 500)
@@ -57,7 +56,9 @@ set(TEST_SOURCES
 #set(TEST_INDEX_COUNT_sleep_big_data 10)
 #set(TEST_INDEX_COUNT_sleep_many_threads 10)
 
-set(TEST_INDEX_COUNT_simple 10000)
+#set(TEST_INDEX_COUNT_simple 10000)
+
+set(TEST_INDEX_COUNT_should_not_be_empty 10000)
 
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
