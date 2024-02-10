@@ -78,7 +78,8 @@ void BLQueue_push(BLQueue* queue, Value item)
         }
         else { // bufor jest pełny
             if (tail->next != NULL) { // następny węzeł już istnieje
-                atomic_compare_exchange_strong(&queue->tail, &tail, tail->next);
+                BLNode* next = tail->next;
+                atomic_compare_exchange_strong(&queue->tail, &tail, next);
             }
             else { // trzeba utworzyć nowy węzeł
                 BLNode* new_node = BLNode_new();
@@ -112,7 +113,7 @@ Value BLQueue_pop(BLQueue* queue)
 
         if (pop_idx_before_inc < BUFFER_SIZE) { // Potencjalnie coś jeszcze może być
 
-            while (true) {
+            while (true) { // Jak wartość się zmieniła to będziemy pobierali ją ponownie
                 Value v = atomic_load(&head->buffer[pop_idx_before_inc]);
                 if (atomic_compare_exchange_strong(&head->buffer[pop_idx_before_inc], &v, TAKEN_VALUE)) {
                     if (v != EMPTY_VALUE) {
@@ -120,8 +121,9 @@ Value BLQueue_pop(BLQueue* queue)
                         return v;
                     }
                     else {
-                        HazardPointer_clear(&queue->hp);
-                        return EMPTY_VALUE; // TODO
+                        // Jak pobraliśmy EMPTY_VALUE, to nic nie wiemy, bo może proces wstawiający na to pole był powolny (nie zdążył wstawić, ale zarezerwował miejsce),
+                        // ale następne pole ma już jakąś zawartość (wstawiał na nie jakiś szybszy proces, nawet mogliśmy to być my)
+                        break; // Sprawdzamy kolejne pola
                     }
                 }
             }
@@ -129,7 +131,7 @@ Value BLQueue_pop(BLQueue* queue)
         else { // W buforze nic nie ma
             if (head->next != NULL) { // Przechodzimy do następnego węzła
                 BLNode* next = head->next;
-                if (atomic_compare_exchange_strong(&queue->head, &head, next)) { // TODO pozamieniac na next
+                if (atomic_compare_exchange_strong(&queue->head, &head, next)) {
                     HazardPointer_retire(&queue->hp, head);
                 }
             } else {
@@ -151,7 +153,7 @@ bool BLQueue_is_empty(BLQueue* queue)
         _Atomic(long long int) pop_idx= atomic_load(&head->pop_idx);
 
         bool result = ((pop_idx >= BUFFER_SIZE && head->next == NULL) ||
-                (pop_idx < BUFFER_SIZE && atomic_load(&head->buffer[pop_idx]) == EMPTY_VALUE));
+                       (pop_idx < BUFFER_SIZE && atomic_load(&head->buffer[pop_idx]) == EMPTY_VALUE));
 
         HazardPointer_clear(&queue->hp);
         return result;
