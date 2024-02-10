@@ -152,8 +152,15 @@ bool BLQueue_is_empty(BLQueue* queue)
         }
         _Atomic(long long int) pop_idx= atomic_load(&head->pop_idx);
 
-        bool result = ((pop_idx >= BUFFER_SIZE && head->next == NULL) ||
-                       (pop_idx < BUFFER_SIZE && atomic_load(&head->buffer[pop_idx]) == EMPTY_VALUE));
+        // Czy coś jest w buforze
+        for (int64_t i = pop_idx; i < BUFFER_SIZE; i++) {
+            Value v = atomic_load(&head->buffer[i]);
+            if (v != EMPTY_VALUE && v != TAKEN_VALUE) {
+                return false;
+            }
+        }
+
+        bool result = (pop_idx >= BUFFER_SIZE && head->next == NULL);
 
         HazardPointer_clear(&queue->hp);
         return result;
