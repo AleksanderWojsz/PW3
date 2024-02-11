@@ -58,7 +58,7 @@ void LLQueue_push(LLQueue* queue, Value item) {
     while (true) {
         LLNode* tail = atomic_load(&queue->tail);
         HazardPointer_protect(&queue->hp, (void*)&tail);
-        if (atomic_load(&queue->tail) != tail) {
+        if (atomic_load(&queue->tail) != tail) { // Żeby tail był usunięty, to musi być równy head'owi, ale wtedy head nie ma następnika, więc nie będzie usuwał. Czyli tail nie może zostać usunięty, więc wystarczy wiedzieć, że nasz tail jest aktualny.
             continue;
         }
 
@@ -82,7 +82,7 @@ Value LLQueue_pop(LLQueue* queue) {
     while (true) {
         LLNode* head = atomic_load(&queue->head);
         HazardPointer_protect(&queue->hp, (void*)&head);
-        if (atomic_load(&queue->head) != head) {
+        if (atomic_load(&queue->head) != head) { // Żeby node został zwolniony, to head najpierw musi być przesunięty
             continue;
         }
         LLNode* next = atomic_load(&head->next); // Bezpiecznie czytamy next
@@ -114,7 +114,7 @@ bool LLQueue_is_empty(LLQueue* queue) {
     while (true) {
         LLNode* head = atomic_load(&queue->head);
         HazardPointer_protect(&queue->hp, (void*)&head);
-        if (atomic_load(&queue->head) != head) {
+        if (atomic_load(&queue->head) != head) { // Żeby node został zwolniony, to head najpierw musi być przesunięty
             continue;
         }
         bool result = (atomic_load(&head->next) == NULL);

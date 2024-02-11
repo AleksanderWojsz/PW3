@@ -65,7 +65,7 @@ void BLQueue_push(BLQueue* queue, Value item)
     while (true) {
         BLNode* tail = atomic_load(&queue->tail);
         HazardPointer_protect(&queue->hp, (void*)&tail);
-        if (atomic_load(&queue->tail) != tail) {
+        if (atomic_load(&queue->tail) != tail) { // Żeby tail był usunięty, to musi być równy head'owi, ale wtedy head nie ma następnika, więc nie będzie usuwał. Czyli tail nie może zostać usunięty, więc wystarczy wiedzieć, że nasz tail jest aktualny.
             continue;
         }
         _Atomic(int) push_idx_before_inc = atomic_fetch_add(&tail->push_idx, 1);
@@ -106,7 +106,7 @@ Value BLQueue_pop(BLQueue* queue)
     while (true) {
         BLNode* head = atomic_load(&queue->head);
         HazardPointer_protect(&queue->hp, (void*)&head);
-        if (atomic_load(&queue->head) != head) {
+        if (atomic_load(&queue->head) != head) { // Żeby node został zwolniony, to head najpierw musi być przesunięty
             continue;
         }
 
@@ -148,7 +148,7 @@ bool BLQueue_is_empty(BLQueue* queue)
     while (true) {
         BLNode* head = atomic_load(&queue->head);
         HazardPointer_protect(&queue->hp, (void*)&head);
-        if (atomic_load(&queue->head) != head) {
+        if (atomic_load(&queue->head) != head) { // Żeby node został zwolniony, to head najpierw musi być przesunięty
             continue;
         }
         _Atomic(int) pop_idx = atomic_load(&head->pop_idx);
