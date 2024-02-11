@@ -49,10 +49,11 @@ BLQueue* BLQueue_new(void)
 
 void BLQueue_delete(BLQueue* queue)
 {
-    while (queue->head != NULL) {
-        BLNode* next = atomic_load(&queue->head->next);
-        free(queue->head); // Tutaj free, bo już nie ma wielowątkowości
-        queue->head = next;
+    while (atomic_load(&queue->head) != NULL) {
+        BLNode* head = atomic_load(&queue->head);
+        BLNode* next = atomic_load(&head->next);
+        free(atomic_load(&queue->head)); // Tutaj free, bo już nie ma wielowątkowości
+        atomic_store(&queue->head, next);
     }
 
     HazardPointer_finalize(&queue->hp);
@@ -77,13 +78,13 @@ void BLQueue_push(BLQueue* queue, Value item)
             }
         }
         else { // bufor jest pełny
-            if (tail->next != NULL) { // następny węzeł już istnieje
-                BLNode* next = tail->next;
+            BLNode* next = atomic_load(&tail->next);
+            if (next != NULL) { // następny węzeł już istnieje
                 atomic_compare_exchange_strong(&queue->tail, &tail, next);
             }
             else { // trzeba utworzyć nowy węzeł
                 BLNode* new_node = BLNode_new();
-                new_node->buffer[0] = item;
+                atomic_store(&new_node->buffer[0], item);
                 atomic_fetch_add(&new_node->push_idx, 1);
                 BLNode* expected_null = NULL;
                 if (atomic_compare_exchange_strong(&tail->next, &expected_null, new_node)) {
@@ -129,8 +130,8 @@ Value BLQueue_pop(BLQueue* queue)
             }
         }
         else { // W buforze nic nie ma
-            if (head->next != NULL) { // Przechodzimy do następnego węzła
-                BLNode* next = head->next;
+            BLNode* next = atomic_load(&head->next);
+            if (next != NULL) { // Przechodzimy do następnego węzła
                 if (atomic_compare_exchange_strong(&queue->head, &head, next)) {
                     HazardPointer_retire(&queue->hp, head);
                 }
@@ -160,7 +161,7 @@ bool BLQueue_is_empty(BLQueue* queue)
             }
         }
 
-        bool result = (pop_idx >= BUFFER_SIZE && head->next == NULL);
+        bool result = (pop_idx >= BUFFER_SIZE && atomic_load(&head->next) == NULL);
 
         HazardPointer_clear(&queue->hp);
         return result;

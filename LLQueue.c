@@ -41,10 +41,11 @@ LLQueue* LLQueue_new(void) {
 
 void LLQueue_delete(LLQueue* queue) {
 
-    while (queue->head != NULL) {
-        LLNode* next = atomic_load(&queue->head->next);
-        free(queue->head); // Tutaj free, bo już nie ma wielowątkowości
-        queue->head = next;
+    while (atomic_load(&queue->head) != NULL) {
+        LLNode* head = atomic_load(&queue->head);
+        LLNode* next = atomic_load(&head->next);
+        free(atomic_load(&queue->head)); // Tutaj free, bo już nie ma wielowątkowości
+        atomic_store(&queue->head, next);
     }
 
     HazardPointer_finalize(&queue->hp);
@@ -63,12 +64,13 @@ void LLQueue_push(LLQueue* queue, Value item) {
 
         // Spodziewamy się, że następny node to null
         LLNode* expected_null = NULL;
-        if (atomic_compare_exchange_strong(&tail->next, &expected_null, new_node) == true) {
+        if (atomic_compare_exchange_strong(&tail->next, &expected_null, new_node)) {
             atomic_compare_exchange_strong(&queue->tail, &tail, new_node);
             HazardPointer_clear(&queue->hp);
             return;
         } else {
-            atomic_compare_exchange_strong(&queue->tail, &tail, tail->next); // TODO czy potrzebne
+            LLNode* next = atomic_load(&tail->next);
+            atomic_compare_exchange_strong(&queue->tail, &tail, next); // Potrzebne jakby wątek, który właśnie dodał node'a poszedł spać na długo i nie zdążył przestawić tail
         }
 
     }
@@ -96,7 +98,7 @@ Value LLQueue_pop(LLQueue* queue) {
         HazardPointer_clear(&queue->hp);
 
 
-        if (atomic_compare_exchange_strong(&queue->head, &head, next) == true) {
+        if (atomic_compare_exchange_strong(&queue->head, &head, next)) {
             atomic_fetch_add(&queue->head_counter, 1);
 
             HazardPointer_retire(&queue->hp, head);
