@@ -23,7 +23,10 @@ void HazardPointer_initialize(HazardPointer* hp) {
         hp->retired_count[i] = 0;
     }
 
+    // Tworzenie tablicy wskaźników do usunięcia
+    hp->retired = malloc(MAX_THREADS * sizeof(void*));
     for (int i = 0; i < MAX_THREADS; i++) {
+        hp->retired[i] = malloc(RETIRED_THRESHOLD * sizeof(void*));
         for (int j = 0; j < RETIRED_THRESHOLD; j++) {
             hp->retired[i][j] = NULL;
         }
@@ -38,8 +41,11 @@ void HazardPointer_finalize(HazardPointer* hp)
                 free(hp->retired[i][j]);
             }
         }
+        free(hp->retired[i]);
     }
+    free(hp->retired);
 }
+
 
 // zapisuje w tablicy zarezerwowanych adresów adres odczytany z atom pod indeksem thread_id i zwraca go (nadpisuje istniejącą rezerwację, jeśli taka była dla thread_id).
 // Korzystający z protect musi się upewnić że podczas protect atom nie zmienił wartości.
