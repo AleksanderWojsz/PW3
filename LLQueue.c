@@ -25,7 +25,7 @@ struct LLQueue {
     AtomicLLNodePtr head;
     AtomicLLNodePtr tail;
     HazardPointer hp;
-    _Atomic (unsigned long long int) head_counter;
+    _Atomic (uint64_t) head_counter;
 };
 
 
@@ -56,7 +56,7 @@ void LLQueue_push(LLQueue* queue, Value item) {
     LLNode* new_node = LLNode_new(item);
     while (true) {
         LLNode* tail = atomic_load(&queue->tail);
-        HazardPointer_protect(&queue->hp, &tail);
+        HazardPointer_protect(&queue->hp, (void*)&tail);
         if (atomic_load(&queue->tail) != tail) {
             continue;
         }
@@ -79,7 +79,7 @@ Value LLQueue_pop(LLQueue* queue) {
 
     while (true) {
         LLNode* head = atomic_load(&queue->head);
-        HazardPointer_protect(&queue->hp, &head);
+        HazardPointer_protect(&queue->hp, (void*)&head);
         if (atomic_load(&queue->head) != head) {
             continue;
         }
@@ -87,8 +87,8 @@ Value LLQueue_pop(LLQueue* queue) {
         if (next == NULL) {
             return EMPTY_VALUE;
         }
-        unsigned long long int prev_head_counter = atomic_load(&queue->head_counter);
-        HazardPointer_protect(&queue->hp, &next);
+        uint64_t prev_head_counter = atomic_load(&queue->head_counter);
+        HazardPointer_protect(&queue->hp, (void*)&next);
         if (atomic_load(&queue->head) != head || prev_head_counter != atomic_load(&queue->head_counter)) { // ABA - nowa głowa może mieć taki sam adres w pamięci jak poprzednia, stąd licznik
             continue;
         }
@@ -111,7 +111,7 @@ bool LLQueue_is_empty(LLQueue* queue) {
 
     while (true) {
         LLNode* head = atomic_load(&queue->head);
-        HazardPointer_protect(&queue->hp, &head);
+        HazardPointer_protect(&queue->hp, (void*)&head);
         if (atomic_load(&queue->head) != head) {
             continue;
         }

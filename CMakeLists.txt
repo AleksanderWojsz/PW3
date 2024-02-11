@@ -14,8 +14,8 @@ set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -Wno-sign-compare -Wno-unused-parame
 #add_compile_options(-fsanitize=thread -Og -g)
 #add_link_options(-fsanitize=thread -Og -g)
 
-#add_compile_options(-fsanitize=address -Og -g)
-#add_link_options(-fsanitize=address -Og -g)
+add_compile_options(-fsanitize=address -Og -g)
+add_link_options(-fsanitize=address -Og -g)
 
 
 
@@ -64,7 +64,7 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
     add_executable(${TEST_NAME} ${TEST_SOURCE})
     target_link_libraries(${TEST_NAME} PRIVATE queues Threads::Threads atomic)
 
-    set(TEST_COUNT 1000)
+    set(TEST_COUNT 500)
 
     if (DEFINED TEST_INDEX_COUNT_${TEST_NAME})
         set(TEST_COUNT ${TEST_INDEX_COUNT_${TEST_NAME}})

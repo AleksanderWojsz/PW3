@@ -63,7 +63,7 @@ void BLQueue_push(BLQueue* queue, Value item)
 {
     while (true) {
         BLNode* tail = atomic_load(&queue->tail);
-        HazardPointer_protect(&queue->hp, &tail);
+        HazardPointer_protect(&queue->hp, (void*)&tail);
         if (atomic_load(&queue->tail) != tail) {
             continue;
         }
@@ -104,7 +104,7 @@ Value BLQueue_pop(BLQueue* queue)
 {
     while (true) {
         BLNode* head = atomic_load(&queue->head);
-        HazardPointer_protect(&queue->hp, &head);
+        HazardPointer_protect(&queue->hp, (void*)&head);
         if (atomic_load(&queue->head) != head) {
             continue;
         }
@@ -146,11 +146,11 @@ bool BLQueue_is_empty(BLQueue* queue)
 {
     while (true) {
         BLNode* head = atomic_load(&queue->head);
-        HazardPointer_protect(&queue->hp, &head);
+        HazardPointer_protect(&queue->hp, (void*)&head);
         if (atomic_load(&queue->head) != head) {
             continue;
         }
-        _Atomic(long long int) pop_idx= atomic_load(&head->pop_idx);
+        _Atomic(int) pop_idx = atomic_load(&head->pop_idx);
 
         // Czy coś jest w buforze
         for (int64_t i = pop_idx; i < BUFFER_SIZE; i++) {

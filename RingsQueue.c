@@ -1,8 +1,10 @@
 #include <malloc.h>
 #include <pthread.h>
 #include <stdatomic.h>
+
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "HazardPointer.h"
 #include "RingsQueue.h"
 
@@ -74,7 +76,6 @@ void RingsQueue_push(RingsQueue* queue, Value item)
         queue->tail = new_node; // Nie trzeba martwić się, że drugi wątek nagle odczyta cały bufor i zrobi free node'a w którym jesteśmy, bo może to zrobić, dopiero jak będzie istniał następny node, a wtedy już w nim będziemy
     }
     else {
-        tail = queue->tail;
         tail->buffer[atomic_load(&tail->push_idx) % RING_SIZE] = item;
         atomic_fetch_add(&tail->push_idx, 1);
     }

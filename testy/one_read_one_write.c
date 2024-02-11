@@ -33,7 +33,7 @@ const QueueVTable queueVTables[] = {
 
 #pragma GCC diagnostic pop
 
-#define THREADS 16 // musi być parzyste
+#define THREADS 64 // musi być parzyste
 #define DATA_SIZE 1000
 
 void* queue;
@@ -108,7 +108,6 @@ int main(void)
 //                printf("%ld ", results[j][k]);
                 suma += results[j][k];
             }
-            printf("\n");
         }
         assert(suma == (THREADS / 2) *  DATA_SIZE * (DATA_SIZE + 1) / 2);
     }
