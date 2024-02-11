@@ -12,8 +12,8 @@ typedef struct RingsQueueNode RingsQueueNode;
 struct RingsQueueNode {
     _Atomic(RingsQueueNode*) next;
     Value buffer[RING_SIZE];
-    _Atomic(long long) push_idx;
-    _Atomic(long long) pop_idx;
+    _Atomic(int64_t) push_idx;
+    _Atomic(int64_t ) pop_idx;
 };
 
 RingsQueueNode* RingsQueueNode_new(void) {

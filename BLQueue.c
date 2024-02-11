@@ -14,8 +14,8 @@ typedef _Atomic(BLNode*) AtomicBLNodePtr;
 struct BLNode {
     AtomicBLNodePtr next;
     _Atomic(Value) buffer[BUFFER_SIZE];
-    _Atomic(long long int) push_idx;
-    _Atomic(long long int) pop_idx;
+    _Atomic(int) push_idx;
+    _Atomic(int) pop_idx;
 };
 
 BLNode* BLNode_new(void) {
@@ -67,7 +67,7 @@ void BLQueue_push(BLQueue* queue, Value item)
         if (atomic_load(&queue->tail) != tail) {
             continue;
         }
-        _Atomic(long long int) push_idx_before_inc = atomic_fetch_add(&tail->push_idx, 1);
+        _Atomic(int) push_idx_before_inc = atomic_fetch_add(&tail->push_idx, 1);
 
         if (push_idx_before_inc < BUFFER_SIZE) { // jest miejsca w buforze
             Value expected_empty = EMPTY_VALUE;
@@ -109,7 +109,7 @@ Value BLQueue_pop(BLQueue* queue)
             continue;
         }
 
-        _Atomic(long long int) pop_idx_before_inc = atomic_fetch_add(&head->pop_idx, 1);
+        _Atomic(int) pop_idx_before_inc = atomic_fetch_add(&head->pop_idx, 1);
 
         if (pop_idx_before_inc < BUFFER_SIZE) { // Potencjalnie coś jeszcze może być
 
