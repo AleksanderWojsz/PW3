@@ -77,7 +77,7 @@ void* basic_test(void* thread_id)
         reader_not_finished = false;
 
         for (int i = 1; i <= DATA_SIZE; i++) {
-            printf("%d ", results[i]);
+            printf("%ld ", results[i]);
             assert(results[i] == 2);
         }
     }

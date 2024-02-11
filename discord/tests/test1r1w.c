@@ -49,7 +49,7 @@ int o1o_writer(void* arg)
 
 static enum Result one_reader_one_writer(QueueVTable Q)
 {
-//    HazardPointer_register(0, 1); // TODO ?
+    HazardPointer_register(0, 1);
     void* queue = Q.new();
 
     struct O1OWargs args = { Q, queue };

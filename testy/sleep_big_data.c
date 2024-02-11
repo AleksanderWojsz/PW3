@@ -36,7 +36,7 @@ const QueueVTable queueVTables[] = {
 #pragma GCC diagnostic pop
 
 #define THREADS 4
-#define DATA_SIZE 100
+#define DATA_SIZE 100000
 
 void* queue;
 QueueVTable Q;
@@ -44,7 +44,7 @@ pthread_t threads[THREADS];
 Value results[THREADS][DATA_SIZE];
 
 
-#define MAX_SLEEP_TIME_US 20000
+#define MAX_SLEEP_TIME_US 20
 void random_sleep(void) {
     int sleep_time_us = rand() % (MAX_SLEEP_TIME_US + 1);
     usleep(sleep_time_us);
@@ -102,7 +102,7 @@ int main(void)
             }
             printf("\n");
         }
-        assert(suma == THREADS * ((DATA_SIZE * (DATA_SIZE + 1)) / 2));
+        assert(suma == (long long)THREADS * (((long long)DATA_SIZE * ((long long)DATA_SIZE + 1)) / 2));
     }
 
     return 0;
